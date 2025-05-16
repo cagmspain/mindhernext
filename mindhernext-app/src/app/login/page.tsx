@@ -25,7 +25,7 @@ export default function LoginPage() {
 		if (res?.error) {
 			setError("Credenciales incorrectas");
 		} else {
-			router.push("/dashboard/paciente"); // o redirige según el rol
+			router.push("/dashboard/paciente/page.tsx"); // o redirige según el rol
 		}
 	};
 
