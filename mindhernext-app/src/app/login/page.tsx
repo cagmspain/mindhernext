@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -24,8 +22,23 @@ export default function LoginPage() {
 
 		if (res?.error) {
 			setError("Credenciales incorrectas");
-		} else {
-			router.push("/dashboard/paciente/page.tsx"); // o redirige según el rol
+			return;
+		}
+
+		// Obtener la sesión para leer el rol
+		const sessionRes = await fetch("/api/auth/session");
+		const session = await sessionRes.json();
+		const role = session.user?.role;
+
+		switch (role) {
+			case "ADMIN":
+				router.push("/dashboard/admin");
+				break;
+			case "PSICOLOGO":
+				router.push("/dashboard/psicologo");
+				break;
+			default:
+				router.push("/dashboard/paciente");
 		}
 	};
 

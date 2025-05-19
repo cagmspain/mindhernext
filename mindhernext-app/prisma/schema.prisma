@@ -1,25 +1,97 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // o mysql/sqlite según tu setup
   url      = env("DATABASE_URL")
-}
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(PACIENTE)
-  createdAt DateTime @default(now())
 }
 
 enum Role {
   PACIENTE
   PSICOLOGO
   ADMIN
+}
+
+enum EstadoCita {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  COMPLETADA
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  email            String    @unique
+  password         String
+  role             Role      @default(PACIENTE)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  citasPaciente    Cita[]    @relation("PacienteCitas")
+  citasPsicologo   Cita[]    @relation("PsicologoCitas")
+  disponibilidades Disponibilidad[]
+  eventosCreados   Evento[]  @relation("EventosCreados")
+  asistencias      AsistenciaEvento[]
+  notas            Nota[]    @relation("NotasDelPsicologo")
+}
+
+model Cita {
+  id            String     @id @default(cuid())
+  pacienteId    String
+  psicologoId   String
+  fechaHora     DateTime
+  estado        EstadoCita @default(PENDIENTE)
+  motivo        String?
+  creadaEn      DateTime   @default(now())
+
+  paciente      User       @relation("PacienteCitas", fields: [pacienteId], references: [id])
+  psicologo     User       @relation("PsicologoCitas", fields: [psicologoId], references: [id])
+  notas         Nota[]
+}
+
+model Nota {
+  id        String   @id @default(cuid())
+  citaId    String
+  autorId   String
+  contenido String
+  creadaEn  DateTime @default(now())
+
+  cita      Cita     @relation(fields: [citaId], references: [id])
+  autor     User     @relation("NotasDelPsicologo", fields: [autorId], references: [id])
+}
+
+model Disponibilidad {
+  id           String   @id @default(cuid())
+  psicologoId  String
+  diaSemana    Int      // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+  horaInicio   String   // formato "09:00"
+  horaFin      String   // formato "12:00"
+
+  psicologo    User     @relation(fields: [psicologoId], references: [id])
+}
+
+model Evento {
+  id          String     @id @default(cuid())
+  titulo      String
+  descripcion String?
+  fechaHora   DateTime
+  creadoPorId String
+  creadoEn    DateTime   @default(now())
+
+  creadoPor   User       @relation("EventosCreados", fields: [creadoPorId], references: [id])
+  asistentes  AsistenciaEvento[]
+}
+
+model AsistenciaEvento {
+  id         String   @id @default(cuid())
+  eventoId   String
+  usuarioId  String
+  registradoEn DateTime @default(now())
+
+  evento     Evento   @relation(fields: [eventoId], references: [id])
+  usuario    User     @relation(fields: [usuarioId], references: [id])
+
+  @@unique([eventoId, usuarioId])
 }

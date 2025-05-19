@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import bcrypt from "bcryptjs";
 
 export default function RegistroPage() {
+	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [name, setName] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
 	const [error, setError] = useState("");
 	const router = useRouter();
 
@@ -15,19 +15,22 @@ export default function RegistroPage() {
 		e.preventDefault();
 		setError("");
 
-		const hashedPassword = await bcrypt.hash(password, 10);
+		if (password !== confirmPassword) {
+			setError("Las contraseñas no coinciden");
+			return;
+		}
 
 		const res = await fetch("/api/registro", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ name, email, password: hashedPassword }),
+			body: JSON.stringify({ name, email, password }),
 		});
 
 		if (res.ok) {
 			router.push("/login");
 		} else {
-			const data = await res.json();
-			setError(data.message || "Error al registrar usuario");
+			const text = await res.text();
+			setError(text || "Error al registrar usuario");
 		}
 	};
 
@@ -57,6 +60,16 @@ export default function RegistroPage() {
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 					required
+					minLength={6}
+					className="border p-2 rounded"
+				/>
+				<input
+					type="password"
+					placeholder="Confirmar contraseña"
+					value={confirmPassword}
+					onChange={(e) => setConfirmPassword(e.target.value)}
+					required
+					minLength={6}
 					className="border p-2 rounded"
 				/>
 				{error && <p className="text-red-600 text-sm">{error}</p>}
