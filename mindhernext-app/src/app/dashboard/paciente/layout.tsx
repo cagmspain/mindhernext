@@ -16,6 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 					>
 						Inicio
 					</Link>
+					<Link href="/dashboard/paciente/agendar">Agendar Cita</Link>
 					<Link
 						href="/dashboard/paciente/citas"
 						className="text-blue-600 hover:underline"
