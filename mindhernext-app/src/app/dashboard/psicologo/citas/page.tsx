@@ -1,4 +1,3 @@
-// src/app/dashboard/psicologo/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,6 +16,7 @@ export default function PsicologoDashboard() {
 	const { data: session, status } = useSession();
 	const [citas, setCitas] = useState<Cita[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [accionEnCurso, setAccionEnCurso] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchCitas = async () => {
@@ -25,9 +25,21 @@ export default function PsicologoDashboard() {
 			setCitas(data);
 			setLoading(false);
 		};
-
 		fetchCitas();
 	}, []);
+
+	const actualizarEstado = async (id: string, nuevoEstado: string) => {
+		setAccionEnCurso(id);
+		await fetch("/api/psicologo/citas", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ citaId: id, nuevoEstado }),
+		});
+		const res = await fetch("/api/psicologo/citas");
+		const data = await res.json();
+		setCitas(data);
+		setAccionEnCurso(null);
+	};
 
 	if (status === "loading" || loading)
 		return <p className="p-6">Cargando...</p>;
@@ -60,7 +72,35 @@ export default function PsicologoDashboard() {
 									})}
 								</strong>
 							</p>
-							<p>Estado: {cita.estado}</p>
+							<p>
+								Estado: <strong>{cita.estado}</strong>
+							</p>
+
+							{cita.estado !== "COMPLETADA" && (
+								<div className="mt-2 flex gap-2">
+									<button
+										onClick={() => actualizarEstado(cita.id, "CONFIRMADA")}
+										disabled={accionEnCurso === cita.id}
+										className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+									>
+										Confirmar
+									</button>
+									<button
+										onClick={() => actualizarEstado(cita.id, "CANCELADA")}
+										disabled={accionEnCurso === cita.id}
+										className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+									>
+										Cancelar
+									</button>
+									<button
+										onClick={() => actualizarEstado(cita.id, "COMPLETADA")}
+										disabled={accionEnCurso === cita.id}
+										className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+									>
+										Marcar como completada
+									</button>
+								</div>
+							)}
 						</li>
 					))}
 				</ul>
