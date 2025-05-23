@@ -28,6 +28,7 @@ export default function LoginPage() {
 		// Obtener la sesión para leer el rol
 		const sessionRes = await fetch("/api/auth/session");
 		const session = await sessionRes.json();
+		console.log("ROL INICIADO:", session.user?.role);
 		const role = session.user?.role;
 
 		switch (role) {
@@ -36,6 +37,9 @@ export default function LoginPage() {
 				break;
 			case "PSICOLOGO":
 				router.push("/dashboard/psicologo");
+				break;
+			case "COACH":
+				router.push("/dashboard/coach");
 				break;
 			default:
 				router.push("/dashboard/paciente");

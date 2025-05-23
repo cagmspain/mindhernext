@@ -19,11 +19,30 @@ export default function InicioPacientePage() {
 
 	useEffect(() => {
 		const fetchCitas = async () => {
-			const res = await fetch("/api/cita");
-			const data: Cita[] = await res.json();
-			const futuras = data.filter((c) => new Date(c.fechaHora) > new Date());
-			setProximaCita(futuras[0] || null);
-			setLoading(false);
+			try {
+				const res = await fetch("/api/cita");
+
+				if (!res.ok) {
+					console.warn("Error al obtener citas:", await res.text());
+					setLoading(false);
+					return;
+				}
+
+				const data: Cita[] = await res.json();
+
+				if (!Array.isArray(data)) {
+					console.error("La respuesta no es un array:", data);
+					setLoading(false);
+					return;
+				}
+
+				const futuras = data.filter((c) => new Date(c.fechaHora) > new Date());
+				setProximaCita(futuras[0] || null);
+			} catch (error) {
+				console.error("Error inesperado al obtener citas:", error);
+			} finally {
+				setLoading(false);
+			}
 		};
 
 		fetchCitas();
@@ -31,6 +50,7 @@ export default function InicioPacientePage() {
 
 	if (status === "loading" || loading)
 		return <p className="p-6">Cargando...</p>;
+
 	if (!session || session.user.role !== "PACIENTE") return <p>No autorizado</p>;
 
 	return (
